@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Project: HashMap</title>
+</head>
+<body>
+  
+  <script>
+
+    class HashMap {
+      constructor(capacity = 16, loadFactor = 0.75) {
+        this.capacity = capacity;
+        this.loadFactor = loadFactor;
+        this.buckets = new Array(capacity);
+      }
+
+      hash(key) { 
+        let hashCode = 0;
+        const primeNum = 31;
+        for (let i = 0; i < key.length; i++) {
+          hashCode = (primeNum * hashCode + key.charCodeAt(i)) % this.capacity;
+        }
+        return hashCode;
+      }
+
+      set(key, value) {
+        let index = this.hash(key);
+        if (!this.buckets[index]) {
+          this.buckets[index] = new LinkedList();
+        }
+        if (!this.has(key)) {
+          this.buckets[index].append(key, value);
+        } else {
+          let current = this.buckets[index].head;
+          let listIndex = this.buckets[index].find(key);   
+          let count = 0;
+          while (current) {
+            if (count === listIndex) {
+              current.value = value;
+            }
+            count++;
+            current = current.nextNode;
+          }
+        }
+        let product = this.capacity * this.loadFactor;
+        if (product < (this.length())) {
+          this.grow();
+        } 
+      }
+
+      get(key) {
+        let index = this.hash(key);
+        let listIndex = this.buckets[index].find(key);
+        if (this.buckets[index] !== undefined && this.buckets[index].contains(key) !== false) {
+          return this.buckets[index].at(listIndex);
+        }
+        return null;
+      }
+
+      has(key) {
+        if (this.get(key)) {
+          return true;
+        } else {
+          return false;
+        }
+      }
+
+      remove(key) {
+        let index = this.hash(key);
+        if (this.buckets[index] !== undefined && this.buckets[index].contains(key) !== false) {
+          let listIndex = this.buckets[index].find(key);
+          this.buckets[index].removeAt(listIndex);
+          return true;
+        }
+        return false;
+      }
+
+      length() {
+        let length = 0;
+        for (let bucket of this.buckets) {
+          if (bucket === undefined) {
+            continue;
+          } else {
+            length += bucket.size();
+          }
+        }
+        return length;
+      }
+
+      clear() {
+        this.buckets = new Array(this.capacity);
+      }
+
+      keys() {
+        let keysArray = [];
+        for (let bucket of this.buckets) {
+          if (bucket === undefined) {
+            continue;
+          } else {
+            let current = bucket.head;
+            while (current !== null) {
+              keysArray.push(current.key);
+              current = current.nextNode;
+            }
+          }
+        }
+        return keysArray;
+      }
+
+      values() {
+        let valuesArray = [];
+        for (let bucket of this.buckets) {
+          if (bucket === undefined) {
+            continue;
+          } else {
+            let current = bucket.head;
+            while (current !== null) {
+              valuesArray.push(current.value);
+              current = current.nextNode;
+            }
+          }
+        }
+        return valuesArray;
+      }
+
+      entries() {
+        let entriesArray = [];
+        for (let bucket of this.buckets) {
+          if (bucket === undefined) {
+            continue;
+          } else {
+            let current = bucket.head;
+            while (current !== null) {
+              entriesArray.push([current.key, current.value]);
+              current = current.nextNode;
+            }
+          }
+        }
+        return entriesArray;
+      }
+
+      grow() {
+        let entries = this.entries();
+        this.capacity = this.capacity * 2;
+        this.buckets = new Array(this.capacity);
+        entries.forEach(entry => {
+          this.set(entry[0], entry[1]);
+        });
+      }
+    }
+
+    class Node {
+      constructor(key = null, value = null, nextNode = null) {
+        this.key = key;
+        this.value = value;
+        this.nextNode = nextNode;
+      }
+    }
+
+    class LinkedList {
+      constructor() {
+        this.head = null;
+        this.tail = null;
+      }
+
+      append(key, value) {
+        const node = new Node(key, value);
+        let current;
+        if (!this.head) {
+          this.head = node;
+          this.tail = node;
+        } else {
+          this.tail.nextNode = node;
+          this.tail = node;
+        }
+      }
+
+      prepend(value) {
+        this.head = new Node(key, value, this.head);
+      }
+
+      size() {
+        let size = 0;
+        let list = this.head;
+        while (list) {
+          size++;
+          list = list.nextNode;
+        }
+        return size;
+      }
+
+      head() {
+        return this.head;
+      }
+
+      tail() {
+        return this.tail;
+      }
+
+      at(index) {
+        if (index >= this.size() || index < 0) {
+          return 'ERROR: index is out of range';
+        } else {
+          let current = this.head;
+          let count = 0;
+          while (current) {
+            if (count === index) {
+              return current.value;
+            }
+            count++;
+            current = current.nextNode;
+          }
+        }
+      }
+
+      pop() {
+        let current = this.head;
+        let count = 0;
+        while (count < this.size() - 2) {
+          current = current.nextNode;
+          count++;
+        }
+        this.tail = current;
+        this.tail.nextNode = null;
+      }
+
+      contains(key) {
+        let current = this.head;
+        while (current) {
+          if (current.key === key) {
+            return true;
+          }
+          current = current.nextNode;
+        }
+        return false;
+      }
+
+      find(key) {
+        let current = this.head;
+        let index = 0;
+        while (current) {
+          if (current.key === key) {
+            return index;
+          }
+          current = current.nextNode;
+          index++;
+        }
+        return null;
+      }
+
+      toString() {
+        let current = this.head;
+        let string = '';
+        while (current) {
+          string += `( ${current.value} ) -> `;
+          current = current.nextNode;
+          if (!current) {
+            string += 'null ';
+          }
+        }
+        return string;
+      }
+
+      insertAt(key, value, index) {
+        if (index < 0 || index > this.size()) {
+          return 'ERROR: index is out of range';
+        } else if (index === 0) {
+          this.head = new Node(key, value, this.head);
+          return;
+        } else {
+          let current;
+          let previous;
+          current = this.head;
+          const node = new Node(key, value, null);
+          let count = 0;
+          while (count < index) {
+            previous = current;
+            count++;
+            current = current.nextNode;
+          }
+          node.nextNode = current;
+          previous.nextNode = node;
+        }
+      }
+
+      removeAt(index) {
+        let current = this.head;
+        let previous;
+        if (index < 0 || index > this.size()) {
+          return 'ERROR: index is out of range';
+        } else if (index === 0) {
+          this.head = current.nextNode;
+        } else {
+          let count = 0;
+          while (count < index) {
+            count++;
+            previous = current;
+            current = current.nextNode;
+          }
+          previous.nextNode = current.nextNode;
+        }
+      }
+    }
+  
+    const test = new HashMap();
+
+    test.set('apple', 'red')
+    test.set('banana', 'yellow')
+    test.set('carrot', 'orange')
+    test.set('dog', 'brown')
+    test.set('elephant', 'gray')
+    test.set('frog', 'green')
+    test.set('grape', 'purple')
+    test.set('hat', 'black')
+    test.set('ice cream', 'white')
+    test.set('jacket', 'blue')
+    test.set('kite', 'pink')
+    test.set('lion', 'golden')
+    // console.log(test.length())
+
+    test.set('lion', 'brown')
+    test.set('hat', 'purple')
+    test.set('moon', 'silver')
+
+
+    // test.set('person', 'matt')
+    // test.set('child', 'rafa')
+    // test.set('dinner', 'pasta')
+    // test.set('house', 'blue')
+    
+    // test.set('lawn', 'grass')
+    // test.set('yard', 'tree')
+    // test.set('siding', 'wood')
+    // test.set('car', 'camaro')
+    // test.set('shop', 'hats')
+    // test.set('place', 'roma')
+    // test.set('greeting', 'hello')
+    // test.set('safari', 'zebra')
+    // test.set('name', 'person')
+    // test.set('what', 'question')
+    // test.set('thing', 'that')
+    // test.set('growth', 'style')
+    // test.set('color', 'green')
+    // test.set('security', 'object')
+    // test.set('phone', 'call')
+    // test.set('book', 'pages')
+
+    // test.set('numbers', 'integers')
+    // test.set('mac', 'computer')
+    // test.set('container', 'glass')
+    // test.set('call', 'me')
+    // test.set('say', 'no')
+    // test.set('see', 'you')
+    // test.set('look', 'touch')
+    // test.set('crazy', 'item')
+    // test.set('cabinet', 'position')
+    // test.set('pine', 'bush')
+    // test.set('airplane', 'engine')
+    // test.set('broken', 'home')
+    // test.set('clothes', 'pants')
+    // test.set('garbage', 'truck')
+    // test.set('outstanding', 'warrant')
+    // test.set('this', 'that')
+
+
+    // console.log(test.buckets);
+    // console.log(test.has('apple'));
+    // console.log(test.values());
+    // console.log(test.remove('apple'));
+    // test.clear();
+    // console.log(test.buckets);
+    // console.log(test.has('apple'));
+    // console.log(test.get('siding'));
+    // console.log(test.length());
+    // console.log(test.keys());
+    // console.log(test.values());
+    // console.log(test.entries());
+
+  </script>
+  
+</body>
+</html>
